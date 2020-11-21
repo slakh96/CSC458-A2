@@ -118,7 +118,7 @@ def start_iperf(net):
     # TODO: Start the iperf client on h1.  Ensure that you create a
     # long lived TCP flow. You may need to redirect iperf's stdout to avoid blocking.
     h1 = net.get('h1')
-    client = h1.popen("iperf -c %s -t %d", h2.IP(), args.time)  # Starts a long lived flow
+    client = h1.popen("iperf -c %s -t %s", str(h2.IP()), str(args.time))  # Starts a long lived flow
 
 def start_webserver(net):
     h1 = net.get('h1')
@@ -148,11 +148,12 @@ def measure_fetch_webpage_time(net, num_samples):
     h1 = net.get('h1')
     h2 = net.get('h2')
     time_to_fetch = []
+    command = "curl -o /dev/null -s -w %{time_total} " + str(h1.IP() + "/http/index.html")
     for i in range(num_samples):
-        popen1 = h2.popen("curl -o /dev/null -s -w %{time_total} %s" % (h1.IP() +"/http/index.html")) # Check if it should be .htm
-        total_time = float(popen1.communicate[0])  # Get the value of stdout
+        popen1 = h2.popen(command, shell=True)  # Check if it should be .htm
+        total_time = float(popen1.communicate()[0])  # Get the value of stdout
         time_to_fetch.append(total_time)
-    return total_time
+    return time_to_fetch
 
 
 def bufferbloat():
