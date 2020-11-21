@@ -17,6 +17,7 @@ from argparse import ArgumentParser
 
 from monitor import monitor_qlen
 import termcolor as T
+import statistics
 
 import sys
 import os
@@ -143,6 +144,17 @@ def start_ping(net):
     h2 = net.get('h2')
     popen2 = h1.popen("ping -c %d -i 0.1 %s > %s/ping.txt" % (num_pings, args.dir, h2.IP()), shell=True)
 
+def measure_fetch_webpage_time(net, num_samples):
+    h1 = net.get('h1')
+    h2 = net.get('h2')
+    time_to_fetch = []
+    for i in range(num_samples):
+        popen1 = h2.popen("curl -o /dev/null -s -w %{time_total} %s" % (h1.IP() +"/http/index.html")) # Check if it should be .htm
+        total_time = float(popen1.communicate[0])  # Get the value of stdout
+        time_to_fetch.append(total_time)
+    return total_time
+
+
 def bufferbloat():
     if not os.path.exists(args.dir):
         os.makedirs(args.dir)
@@ -192,10 +204,12 @@ def bufferbloat():
     # Hint: have a separate function to do this and you may find the
     # loop below useful.
     start_time = time()
+    webpage_transfer_times = []
     while True:
         # do the measurement (say) 3 times.
         sleep(1)
         now = time()
+        webpage_transfer_times += measure_fetch_webpage_time(net, 3)  # Take three samples of how long it takes to get the page
         delta = now - start_time
         if delta > args.time:
             break
@@ -204,6 +218,9 @@ def bufferbloat():
     # TODO: compute average (and standard deviation) of the fetch
     # times.  You don't need to plot them.  Just note it in your
     # README and explain.
+    avg = sum(webpage_transfer_times) / len(webpage_transfer_times)
+    std_dev = statistics.stdev(webpage_transfer_times)
+    print("The avg is %d and std dev is %d", avg, std_dev)
 
     stop_tcpprobe()
     if qmon is not None:
