@@ -73,7 +73,7 @@ class BBTopo(Topo):
     def build(self, n=2):
         # Here are two hosts
         hosts = []
-        for i in range(1,n+1):
+        for i in range(1, n+1):
             hosts.append(self.addHost('h%d'%(i)))
 
         # Here I have created a switch.  If you change its name, its
@@ -81,6 +81,11 @@ class BBTopo(Topo):
         switch = self.addSwitch('s0')
 
         # TODO: Add links with appropriate characteristics
+        keys  = []
+        keys.append(self.addLink(hosts[0], switch, bw=1000))  # The link from us to switch
+        keys.append(self.addLink(switch, hosts[1], bw=10))
+        # self.hosts = hosts
+        # self.keys = keys
 
 # Simple wrappers around monitoring utilities.  You are welcome to
 # contribute neatly written (using classes) monitoring scripts for
@@ -111,6 +116,8 @@ def start_iperf(net):
     server = h2.popen("iperf -s -w 16m")
     # TODO: Start the iperf client on h1.  Ensure that you create a
     # long lived TCP flow. You may need to redirect iperf's stdout to avoid blocking.
+    h1 = net.get('h1')
+    client = h1.popen("iperf -c %s -t %d", h2.IP(), args.time)  # Starts a long lived flow
 
 def start_webserver(net):
     h1 = net.get('h1')
@@ -131,6 +138,10 @@ def start_ping(net):
     # redirecting stdout
     h1 = net.get('h1')
     popen = h1.popen("echo '' > %s/ping.txt"%(args.dir), shell=True)
+    # Find the number of pings
+    num_pings = args.time * 10  # So the pings keep getting sent over the whole time interval
+    h2 = net.get('h2')
+    popen2 = h1.popen("ping -c %d -i 0.1 %s > %s/ping.txt" % (num_pings, args.dir, h2.IP()), shell=True)
 
 def bufferbloat():
     if not os.path.exists(args.dir):
@@ -159,12 +170,13 @@ def bufferbloat():
     # Depending on the order you add links to your network, this
     # number may be 1 or 2.  Ensure you use the correct number.
     #
-    # qmon = start_qmon(iface='s0-eth2',
-    #                  outfile='%s/q.txt' % (args.dir))
-    qmon = None
+    qmon = start_qmon(iface='s0-eth2',
+                     outfile='%s/q.txt' % (args.dir))
+    #qmon = None
 
     # TODO: Start iperf, webservers, etc.
-    # start_iperf(net)
+    start_iperf(net)
+    start_webserver(net)
 
     # Hint: The command below invokes a CLI which you can use to
     # debug.  It allows you to run arbitrary commands inside your
