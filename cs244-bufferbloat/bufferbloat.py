@@ -83,8 +83,8 @@ class BBTopo(Topo):
 
         # TODO: Add links with appropriate characteristics
         keys  = []
-        keys.append(self.addLink(hosts[0], switch, bw=1000))  # The link from us to switch
-        keys.append(self.addLink(switch, hosts[1], bw=10))
+        keys.append(self.addLink(hosts[0], switch, bw=1000, delay='4ms', max_queue_size=100))  # The link from us to switch
+        keys.append(self.addLink(switch, hosts[1], bw=10, delay='4ms', max_queue_size=100))
         # self.hosts = hosts
         # self.keys = keys
 
