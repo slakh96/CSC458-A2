@@ -110,6 +110,11 @@ def start_qmon(iface, interval_sec=0.1, outfile="q.txt"):
     monitor.start()
     return monitor
 
+def start_iperf_process(net):
+    iperf_process = Process(target=start_iperf, args=(net,))
+    iperf_process.start()
+    return iperf_process
+
 def start_iperf(net):
     h2 = net.get('h2')
     print "Starting iperf server..."
@@ -128,6 +133,12 @@ def start_webserver(net):
     sleep(1)
     return [proc]
 
+def start_ping_process(net):
+    ping_process = Process(target=start_ping, args=(net,))
+    ping_process.start()
+    return ping_process
+
+
 def start_ping(net):
     # TODO: Start a ping train from h1 to h2 (or h2 to h1, does it
     # matter?)  Measure RTTs every 0.1 second.  Read the ping man page
@@ -144,7 +155,7 @@ def start_ping(net):
     # Find the number of pings
     num_pings = args.time * 10  # So the pings keep getting sent over the whole time interval
     h2 = net.get('h2')
-    popen2 = h1.popen("ping -c %d -i 0.1 %s > %s/ping.txt" % (num_pings, args.dir, h2.IP()), shell=True)
+    popen2 = h1.popen("ping -c %d -i 0.1 %s > %s/ping.txt" % (num_pings, h2.IP(), args.dir), shell=True)
 
 def measure_fetch_webpage_time(net, num_samples):
     h1 = net.get('h1')
@@ -177,7 +188,7 @@ def bufferbloat():
 
     # Start all the monitoring processes
     start_tcpprobe("cwnd.txt")
-    start_ping(net)
+    ping_process = start_ping_process(net)
 
     # TODO: Start monitoring the queue sizes.  Since the switch I
     # created is "s0", I monitor one of the interfaces.  Which
@@ -190,7 +201,8 @@ def bufferbloat():
     #qmon = None
 
     # TODO: Start iperf, webservers, etc.
-    start_iperf(net)
+    #start_iperf(net)
+    iperf_process = start_iperf_process(net)
     start_webserver(net)
 
     # Hint: The command below invokes a CLI which you can use to
@@ -212,7 +224,7 @@ def bufferbloat():
         # do the measurement (say) 3 times.
         sleep(1)
         now = time()
-        webpage_transfer_times += measure_fetch_webpage_time(net, 3)  # Take three samples of how long it takes to get the page
+        webpage_transfer_times += measure_fetch_webpage_time(net, 1)  # Take three samples of how long it takes to get the page
         delta = now - start_time
         if delta > args.time:
             break
@@ -228,6 +240,11 @@ def bufferbloat():
     stop_tcpprobe()
     if qmon is not None:
         qmon.terminate()
+    if iperf_process is not None:
+        iperf_process.terminate()
+    if ping_process is not None:
+        ping_process.terminate()
+
     net.stop()
     # Ensure that all processes you create within Mininet are killed.
     # Sometimes they require manual killing.
