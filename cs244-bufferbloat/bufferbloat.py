@@ -17,7 +17,7 @@ from argparse import ArgumentParser
 
 from monitor import monitor_qlen
 import termcolor as T
-import statistics
+#import statistics
 
 import sys
 import os
@@ -86,7 +86,7 @@ class BBTopo(Topo):
         delay  = str(args.delay)
         delay += "ms"
         keys.append(self.addLink(hosts[0], switch, bw=1000, delay=delay, max_queue_size=args.maxq))  # The link from us to switch
-        keys.append(self.addLink(switch, hosts[1], bw=10, delay=delay, max_queue_size=args.maxq))
+        keys.append(self.addLink(hosts[1], switch, bw=10, delay=delay, max_queue_size=args.maxq))
         # self.hosts = hosts
         # self.keys = keys
 
@@ -125,7 +125,7 @@ def start_iperf(net):
     # TODO: Start the iperf client on h1.  Ensure that you create a
     # long lived TCP flow. You may need to redirect iperf's stdout to avoid blocking.
     h1 = net.get('h1')
-    client = h1.popen("iperf -c %s -t %s", str(h2.IP()), str(args.time))  # Starts a long lived flow
+    client = h1.popen("iperf -c %s -t %s > /dev/null", str(h2.IP()), str(args.time))  # Starts a long lived flow
 
 def start_webserver(net):
     h1 = net.get('h1')
@@ -168,6 +168,17 @@ def measure_fetch_webpage_time(net, num_samples):
         time_to_fetch.append(total_time)
     return time_to_fetch
 
+def write_webpage_download_time_to_file(download_times):
+    # Download times should be a list of list(seconds, download time)
+    f = open(args.dir + "/webpage_download.txt", "w")
+    f.write("") #Delete previous content
+    f.close()
+    f = open(args.dir + "/webpage_download.txt", "a")
+
+    for entry in download_times:
+        f.write(str(entry[0]) + "," + str(entry[1]) +"\n")
+    return
+
 
 def bufferbloat():
     if not os.path.exists(args.dir):
@@ -188,7 +199,7 @@ def bufferbloat():
 
     # Start all the monitoring processes
     start_tcpprobe("cwnd.txt")
-    ping_process = start_ping_process(net)
+    ping_process = start_ping(net)
 
     # TODO: Start monitoring the queue sizes.  Since the switch I
     # created is "s0", I monitor one of the interfaces.  Which
@@ -202,7 +213,7 @@ def bufferbloat():
 
     # TODO: Start iperf, webservers, etc.
     #start_iperf(net)
-    iperf_process = start_iperf_process(net)
+    iperf_process = start_iperf(net)
     start_webserver(net)
 
     # Hint: The command below invokes a CLI which you can use to
@@ -220,11 +231,14 @@ def bufferbloat():
     # loop below useful.
     start_time = time()
     webpage_transfer_times = []
+    webpage_transfer_times_to_plot = []
     while True:
         # do the measurement (say) 3 times.
         sleep(1)
         now = time()
-        webpage_transfer_times += measure_fetch_webpage_time(net, 1)  # Take three samples of how long it takes to get the page
+        time_to_download = measure_fetch_webpage_time(net, 1)  # Take one sample of how long it takes to get the page
+        webpage_transfer_times += time_to_download
+        webpage_transfer_times_to_plot.append([now, time_to_download[0]])
         delta = now - start_time
         if delta > args.time:
             break
@@ -234,8 +248,11 @@ def bufferbloat():
     # times.  You don't need to plot them.  Just note it in your
     # README and explain.
     avg = sum(webpage_transfer_times) / len(webpage_transfer_times)
-    std_dev = statistics.stdev(webpage_transfer_times)
-    print("The avg is %d and std dev is %d", avg, std_dev)
+    #std_dev = statistics.stdev(webpage_transfer_times)
+    print("The avg is %d and std dev is", avg)
+    test_data = [[1, 0.5], [2, 0.75], [3, 0.9]]
+    print webpage_transfer_times_to_plot
+    write_webpage_download_time_to_file(webpage_transfer_times_to_plot)
 
     stop_tcpprobe()
     if qmon is not None:

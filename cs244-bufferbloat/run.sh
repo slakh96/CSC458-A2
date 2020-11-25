@@ -16,7 +16,7 @@ modprobe tcp_probe
 # make sure we don't use a cached cwnd
 sysctl -w net.ipv4.tcp_no_metrics_save=1
 
-for qsize in 5 20 100; do
+for qsize in 5 20 100 ; do
     dir=bb-q$qsize
 
     python bufferbloat.py --dir=$dir --time=$time --bw-net=$bwnet --delay=$delay --maxq=$qsize
@@ -27,4 +27,5 @@ for qsize in 5 20 100; do
     python plot_tcpprobe.py -f $dir/cwnd.txt -o $dir/cwnd-iperf.png -p $iperf_port
     python plot_queue.py -f $dir/q.txt -o $dir/q.png
     python plot_ping.py -f $dir/ping.txt -o $dir/rtt.png
+    python plot_webpage_download.py -f $dir/webpage_download.txt -o $dir/webpage_download.png
 done
