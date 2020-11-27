@@ -30,6 +30,8 @@ def parse_ping(fname):
     ret = []
     lines = open(fname).readlines()
     num = 0
+    sum = 0
+    count = 0
     for line in lines:
         if 'bytes from' not in line:
             continue
@@ -37,10 +39,14 @@ def parse_ping(fname):
             rtt = line.split(' ')[-2]
             rtt = rtt.split('=')[1]
             rtt = float(rtt)
+            sum += rtt
+            count += 1
             ret.append([num, rtt])
             num += 1
         except:
             break
+    print "AVERAGE PING TIME IS: "
+    print sum/count
     return ret
 
 m.rc('figure', figsize=(16, 6))

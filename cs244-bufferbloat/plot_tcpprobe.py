@@ -54,18 +54,14 @@ def parse_file(f):
         #print "Reached readline loop of parse_file"
         fields = l.strip().split(' ')
         if len(fields) != num_fields:
-            print "len fields not equal to num_fields, len fields, num fields", len(fields), num_fields
             break
         if not args.sport:
             if fields[2].split(':')[1] != args.port:
-                print fields[2].split(':')[1], args.port
+                #print fields[2].split(':')[1], args.port
                 continue
         else:
-            print "using sport %s (compare with %s)" % (args.port, fields[1].split(':')[1])
             if fields[1].split(':')[1] != args.port:
-                print "Testing123"
                 continue
-        print "Valid data"
         sport = int(fields[1].split(':')[1])
         times[sport].append(float(fields[0]))
 
@@ -85,8 +81,6 @@ def plot_cwnds(ax):
         for port in sorted(cwnds.keys()):
             t = times[port]
             cwnd = cwnds[port]
-            print "The t is ", t
-            print "The cwnd is", cwnd
 
             events += zip(t, [port]*len(t), cwnd)
             ax.plot(t, cwnd)

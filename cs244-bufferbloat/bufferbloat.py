@@ -17,7 +17,7 @@ from argparse import ArgumentParser
 
 from monitor import monitor_qlen
 import termcolor as T
-#import statistics
+import statistics
 
 import sys
 import os
@@ -125,7 +125,7 @@ def start_iperf(net):
     # TODO: Start the iperf client on h1.  Ensure that you create a
     # long lived TCP flow. You may need to redirect iperf's stdout to avoid blocking.
     h1 = net.get('h1')
-    client = h1.popen("iperf -c %s -t %s > /dev/null", str(h2.IP()), str(args.time))  # Starts a long lived flow
+    client = h1.popen("iperf -c %s -t %s > /dev/null" % (h2.IP(), str(args.time)))  # Starts a long lived flow
 
 def start_webserver(net):
     h1 = net.get('h1')
@@ -199,7 +199,7 @@ def bufferbloat():
 
     # Start all the monitoring processes
     start_tcpprobe("cwnd.txt")
-    ping_process = start_ping(net)
+    ping_process = start_ping_process(net)
 
     # TODO: Start monitoring the queue sizes.  Since the switch I
     # created is "s0", I monitor one of the interfaces.  Which
@@ -213,7 +213,7 @@ def bufferbloat():
 
     # TODO: Start iperf, webservers, etc.
     #start_iperf(net)
-    iperf_process = start_iperf(net)
+    iperf_process = start_iperf_process(net)
     start_webserver(net)
 
     # Hint: The command below invokes a CLI which you can use to
@@ -248,10 +248,10 @@ def bufferbloat():
     # times.  You don't need to plot them.  Just note it in your
     # README and explain.
     avg = sum(webpage_transfer_times) / len(webpage_transfer_times)
-    #std_dev = statistics.stdev(webpage_transfer_times)
-    print("The avg is %d and std dev is", avg)
+    std_dev = statistics.stdev(webpage_transfer_times)
+    print("The avg is %d and std dev is", avg, std_dev)
     test_data = [[1, 0.5], [2, 0.75], [3, 0.9]]
-    print webpage_transfer_times_to_plot
+    #print webpage_transfer_times_to_plot
     write_webpage_download_time_to_file(webpage_transfer_times_to_plot)
 
     stop_tcpprobe()
