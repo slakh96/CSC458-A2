@@ -17,7 +17,7 @@ from argparse import ArgumentParser
 
 from monitor import monitor_qlen
 import termcolor as T
-import statistics
+from helper import *
 
 import sys
 import os
@@ -87,8 +87,6 @@ class BBTopo(Topo):
         delay += "ms"
         keys.append(self.addLink(hosts[0], switch, bw=1000, delay=delay, max_queue_size=args.maxq))  # The link from us to switch
         keys.append(self.addLink(hosts[1], switch, bw=10, delay=delay, max_queue_size=args.maxq))
-        # self.hosts = hosts
-        # self.keys = keys
 
 # Simple wrappers around monitoring utilities.  You are welcome to
 # contribute neatly written (using classes) monitoring scripts for
@@ -209,10 +207,8 @@ def bufferbloat():
     #
     qmon = start_qmon(iface='s0-eth2',
                      outfile='%s/q.txt' % (args.dir))
-    #qmon = None
 
     # TODO: Start iperf, webservers, etc.
-    #start_iperf(net)
     iperf_process = start_iperf_process(net)
     start_webserver(net)
 
@@ -248,10 +244,8 @@ def bufferbloat():
     # times.  You don't need to plot them.  Just note it in your
     # README and explain.
     avg = sum(webpage_transfer_times) / len(webpage_transfer_times)
-    std_dev = statistics.stdev(webpage_transfer_times)
+    std_dev = stdev(webpage_transfer_times)
     print("The avg is %d and std dev is", avg, std_dev)
-    test_data = [[1, 0.5], [2, 0.75], [3, 0.9]]
-    #print webpage_transfer_times_to_plot
     write_webpage_download_time_to_file(webpage_transfer_times_to_plot)
 
     stop_tcpprobe()
