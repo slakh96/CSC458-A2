@@ -27,5 +27,5 @@ for qsize in 5 20 100 ; do
     python plot_tcpprobe.py -f $dir/cwnd.txt -o $dir/cwnd-iperf.png -p $iperf_port
     python plot_queue.py -f $dir/q.txt -o $dir/q.png
     python plot_ping.py -f $dir/ping.txt -o $dir/rtt.png
-    python plot_webpage_download.py -f $dir/webpage_download.txt -o $dir/webpage_download.png
+    python plot_queue.py --wdownload 1 -f $dir/webpage_download.txt -o $dir/webpage_download.png
 done
